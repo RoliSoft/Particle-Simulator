@@ -31,6 +31,9 @@ public:
 	CButton GravityCheck;
 	CButton CollisionCheck;
 	CButton CoreOnlyCheck;
+	CButton BounceCheck;
+	CButton DebugCheck;
+	CButton TraceCheck;
 	std::vector<Particle*>* Particles;
 	ULONG_PTR GdiplusToken;
 	unsigned long long Generation;

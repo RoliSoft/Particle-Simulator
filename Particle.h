@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include <boost/circular_buffer.hpp>
 #include "Vector.h"
 
 class Particle
@@ -11,10 +12,11 @@ public:
 	double Size;
 	double Mass;
 	COLORREF Color;
+	boost::circular_buffer<Vector> History;
 
 	Particle(void);
 	Particle(COLORREF color, double size, double mass, Vector location, Vector velocity, Vector acceleration);
 
-	void Update();
-	void Draw(Gdiplus::Graphics* g);
+	void Update(bool history);
+	void Draw(Gdiplus::Graphics* g, bool history);
 };

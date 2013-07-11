@@ -14,6 +14,7 @@ CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSim
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&GdiplusToken, &gdiplusStartupInput, NULL);
 	Generation = 0;
+	srand(time(NULL));
 }
 
 CParticleSimDlg::~CParticleSimDlg()
@@ -28,6 +29,9 @@ void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_GRAVITYCHECK, GravityCheck);
 	DDX_Control(pDX, IDC_COLLISIONCHECK, CollisionCheck);
 	DDX_Control(pDX, IDC_COREONLYCHECK, CoreOnlyCheck);
+	DDX_Control(pDX, IDC_BOUNCECHECK, BounceCheck);
+	DDX_Control(pDX, IDC_DEBUGCHECK, DebugCheck);
+	DDX_Control(pDX, IDC_TRACECHECK, TraceCheck);
 }
 
 BEGIN_MESSAGE_MAP(CParticleSimDlg, CDialog)
@@ -37,7 +41,6 @@ BEGIN_MESSAGE_MAP(CParticleSimDlg, CDialog)
 	ON_STN_CLICKED(IDC_PICTURE, &CParticleSimDlg::OnStnClickedPicture)
 	ON_BN_CLICKED(IDC_COLLISIONCHECK, &CParticleSimDlg::OnBnClickedCollisioncheck)
 END_MESSAGE_MAP()
-
 
 UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 {
@@ -60,8 +63,6 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 					if (that->CoreOnlyCheck.GetCheck() == BST_CHECKED)
 					{
-						/*collides = (*that->Particles)[i]->Location.X == (*that->Particles)[j]->Location.X
-								&& (*that->Particles)[i]->Location.Y == (*that->Particles)[j]->Location.Y;*/
 						collides = (((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X) * ((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X)) + (((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y) * ((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y))
 								<= 4;
 					}
@@ -87,24 +88,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 						part->Size = max((*that->Particles)[i]->Size, (*that->Particles)[j]->Size) + (0.5 * min((*that->Particles)[i]->Size, (*that->Particles)[j]->Size));
 						part->Mass = max((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass) + (0.5 * min((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass));
-						//part->Mass = (*that->Particles)[i]->Mass + (*that->Particles)[j]->Mass;
-
 						part->Color = RGB(GetRValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetRValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetGValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetGValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetBValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetBValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum));
-						//part->Color = RGB((GetRValue((*that->Particles)[i]->Color) + GetRValue((*that->Particles)[j]->Color)) / 2, (GetGValue((*that->Particles)[i]->Color) + GetGValue((*that->Particles)[j]->Color)) / 2, (GetBValue((*that->Particles)[i]->Color) + GetBValue((*that->Particles)[j]->Color)) / 2);
-
-						/*if ((*that->Particles)[i]->Size > (*that->Particles)[j]->Size)
-						{
-							part->Location += (*that->Particles)[i]->Location;
-						}
-						else if ((*that->Particles)[i]->Size < (*that->Particles)[j]->Size)
-						{
-							part->Location += (*that->Particles)[j]->Location;
-						}
-						else
-						{
-							part->Location += (*that->Particles)[i]->Location * 0.5 + (*that->Particles)[j]->Location * 0.5;
-						}*/
-
 						part->Location = (*that->Particles)[i]->Location * ((*that->Particles)[i]->Size / sum) + (*that->Particles)[j]->Location * ((*that->Particles)[j]->Size / sum);
 						part->Velocity = (((*that->Particles)[i]->Velocity * (*that->Particles)[i]->Mass) + ((*that->Particles)[j]->Velocity * (*that->Particles)[j]->Mass)) / ((*that->Particles)[i]->Mass + (*that->Particles)[j]->Mass);
 
@@ -144,16 +128,34 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 					*grav += dist;
 				}
 
-				//(*that->Particles)[i]->Velocity += grav;
 				(*that->Particles)[i]->Acceleration = *grav;
 
 				delete grav;
 			}
 		}
 
+		if (that->BounceCheck.GetCheck() == BST_CHECKED)
+		{
+			for (unsigned int i = 0; i < that->Particles->size(); i++)
+			{
+				if (((*that->Particles)[i]->Location.X <= (*that->Particles)[i]->Size && (*that->Particles)[i]->Velocity.X < 0)
+				 || ((*that->Particles)[i]->Location.X >= (that->MainPict.Width - (*that->Particles)[i]->Size - 3) && (*that->Particles)[i]->Velocity.X > 0))
+				{
+					(*that->Particles)[i]->Velocity.X *= -1;
+				}
+				if (((*that->Particles)[i]->Location.Y <= (*that->Particles)[i]->Size && (*that->Particles)[i]->Velocity.Y < 0)
+				 || ((*that->Particles)[i]->Location.Y >= (that->MainPict.Height - (*that->Particles)[i]->Size - 3) && (*that->Particles)[i]->Velocity.Y > 0))
+				{
+					(*that->Particles)[i]->Velocity.Y *= -1;
+				}
+			}
+		}
+
+		bool trace = that->TraceCheck.GetCheck() == BST_CHECKED;
+
 		for (unsigned int i = 0; i < that->Particles->size(); i++)
 		{
-			(*that->Particles)[i]->Update();
+			(*that->Particles)[i]->Update(trace);
 		}
 
 		that->Generation++;
@@ -176,13 +178,11 @@ BOOL CParticleSimDlg::OnInitDialog()
 	GravityCheck.SetCheck(BST_CHECKED);
 	CollisionCheck.SetCheck(BST_CHECKED);
 	CoreOnlyCheck.SetCheck(BST_CHECKED);
+	BounceCheck.SetCheck(BST_CHECKED);
+	//TraceCheck.SetCheck(BST_CHECKED);
+	DebugCheck.SetCheck(BST_CHECKED);
 
 	Particles = new std::vector<Particle*>();
-
-	//Particles->push_back(new Particle(RGB(125, 125, 125), 0, 1000, Vector(400, 240, 0), Vector(0, 0, 0), Vector(0, 0, 0)));
-	//Particles->push_back(new Particle(RGB(255, 0, 0), 0, 100, Vector(300, 600, 0), Vector(0, 0, 0), Vector(0, 0, 0)));
-	//Particles->push_back(new Particle(RGB(0, 0, 255), 0, 10, Vector(350, 98, 0), Vector(0, 0, 0), Vector(0, 0, 0)));
-	//Particles->push_back(new Particle(RGB(0, 0, 255), 0, 1, Vector(500, 452, 0), Vector(0, 0, 0), Vector(0, 0, 0)));
 
 	AfxBeginThread(&CParticleSimDlg::SpinThd, this);
 

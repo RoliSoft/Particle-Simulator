@@ -8,6 +8,7 @@ class CPicture : public CStatic
 {
 public:
 	CStatic* Owner;
+	int Width, Height;
 
 	CPicture(void);
 	~CPicture(void);
