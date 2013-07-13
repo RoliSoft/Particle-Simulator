@@ -9,7 +9,7 @@ Particle::Particle(void)
 	this->Acceleration = Vector(0, 0, 0);
 	this->Size = 0;
 	this->Mass = 0;
-	this->History = boost::circular_buffer<Vector>(30);
+	this->History = boost::circular_buffer<Vector>(50);
 }
 
 Particle::Particle(COLORREF color, double size, double mass, Vector location, Vector velocity, Vector acceleration)
@@ -20,7 +20,7 @@ Particle::Particle(COLORREF color, double size, double mass, Vector location, Ve
 	this->Acceleration = acceleration;
 	this->Size = size == 0 ? 20 * mass / 1000 : size;
 	this->Mass = mass;
-	this->History = boost::circular_buffer<Vector>(30);
+	this->History = boost::circular_buffer<Vector>(50);
 }
 
 void Particle::Update(bool history)
@@ -43,9 +43,8 @@ void Particle::Draw(CHwndRenderTarget* d, bool history)
 {
 	using namespace D2D1;
 
-	if (this->histBrush == nullptr && this->lineBrush == nullptr && this->fillBrush == nullptr)
+	if (this->lineBrush == nullptr && this->fillBrush == nullptr)
 	{
-		this->histBrush = new CD2DSolidColorBrush(d, RGB(125, 125, 125), 125);
 		this->lineBrush = new CD2DSolidColorBrush(d, this->Color);
 		this->fillBrush = new CD2DSolidColorBrush(d, this->Color, 125);
 	}
@@ -60,13 +59,15 @@ void Particle::Draw(CHwndRenderTarget* d, bool history)
 			auto from = Point2(history[i - 1].X, history[i - 1].Y);
 			auto to   = Point2(history[i].X, history[i].Y);
 
-			d->DrawLine(from, to, this->histBrush);
+			this->lineBrush->SetOpacity((float)i / (float)size);
+			d->DrawLine(from, to, this->lineBrush, 2);
 		}
 
 		auto from = Point2(history[size - 1].X, history[size - 1].Y);
 		auto to   = Point2(this->Location.X, this->Location.Y);
 
-		d->DrawLine(from, to, this->histBrush);
+		this->lineBrush->SetOpacity(1);
+		d->DrawLine(from, to, this->lineBrush, 2);
 	}
 	
 	auto center  = Point2(this->Location.X, this->Location.Y);

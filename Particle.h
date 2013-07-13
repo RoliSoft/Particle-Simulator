@@ -21,5 +21,5 @@ public:
 	void Draw(CHwndRenderTarget* d, bool history);
 
 private:
-	CD2DSolidColorBrush *histBrush, *lineBrush, *fillBrush;
+	CD2DSolidColorBrush *lineBrush, *fillBrush;
 };

@@ -30,6 +30,7 @@ void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BOUNCECHECK, BounceCheck);
 	DDX_Control(pDX, IDC_DEBUGCHECK, DebugCheck);
 	DDX_Control(pDX, IDC_TRACECHECK, TraceCheck);
+	DDX_Control(pDX, IDC_MERGECHECK, MergeCheck);
 }
 
 BEGIN_MESSAGE_MAP(CParticleSimDlg, CDialog)
@@ -81,27 +82,40 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 						del->push_back((*that->Particles)[i]);
 						del->push_back((*that->Particles)[j]);
 
-						auto part = new Particle();
-						auto sum = (*that->Particles)[i]->Size + (*that->Particles)[j]->Size;
+						if (that->MergeCheck.GetCheck() == BST_CHECKED)
+						{
+							auto part = new Particle();
+							auto sum  = (*that->Particles)[i]->Size + (*that->Particles)[j]->Size;
 
-						part->Size = max((*that->Particles)[i]->Size, (*that->Particles)[j]->Size) + (0.5 * min((*that->Particles)[i]->Size, (*that->Particles)[j]->Size));
-						part->Mass = max((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass) + (0.5 * min((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass));
-						part->Color = RGB(GetRValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetRValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetGValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetGValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetBValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetBValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum));
-						part->Location = (*that->Particles)[i]->Location * ((*that->Particles)[i]->Size / sum) + (*that->Particles)[j]->Location * ((*that->Particles)[j]->Size / sum);
-						part->Velocity = (((*that->Particles)[i]->Velocity * (*that->Particles)[i]->Mass) + ((*that->Particles)[j]->Velocity * (*that->Particles)[j]->Mass)) / ((*that->Particles)[i]->Mass + (*that->Particles)[j]->Mass);
+							part->Size     = max((*that->Particles)[i]->Size, (*that->Particles)[j]->Size) + (0.5 * min((*that->Particles)[i]->Size, (*that->Particles)[j]->Size));
+							part->Mass     = max((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass) + (0.5 * min((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass));
+							part->Color    = RGB(GetRValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetRValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetGValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetGValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetBValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetBValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum));
+							part->Location = (*that->Particles)[i]->Location * ((*that->Particles)[i]->Size / sum) + (*that->Particles)[j]->Location * ((*that->Particles)[j]->Size / sum);
+							part->Velocity = (((*that->Particles)[i]->Velocity * (*that->Particles)[i]->Mass) + ((*that->Particles)[j]->Velocity * (*that->Particles)[j]->Mass)) / ((*that->Particles)[i]->Mass + (*that->Particles)[j]->Mass);
 
-						that->Particles->push_back(part);
+							that->Particles->push_back(part);
+						}
+						else
+						{
+							(*that->Particles)[i]->Velocity.X *= -1;
+							(*that->Particles)[i]->Velocity.Y *= -1;
+							(*that->Particles)[j]->Velocity.X *= -1;
+							(*that->Particles)[j]->Velocity.Y *= -1;
+						}
 					}
 				}
 			}
 
-			for (unsigned int i = 0; i < del->size(); i++)
+			if (that->MergeCheck.GetCheck() == BST_CHECKED)
 			{
-				auto iter = std::find(that->Particles->begin(), that->Particles->end(), (*del)[i]);
-
-				if (iter != that->Particles->end())
+				for (unsigned int i = 0; i < del->size(); i++)
 				{
-					that->Particles->erase(iter);
+					auto iter = std::find(that->Particles->begin(), that->Particles->end(), (*del)[i]);
+
+					if (iter != that->Particles->end())
+					{
+						that->Particles->erase(iter);
+					}
 				}
 			}
 
@@ -175,8 +189,9 @@ BOOL CParticleSimDlg::OnInitDialog()
 	GravityCheck.SetCheck(BST_CHECKED);
 	CollisionCheck.SetCheck(BST_CHECKED);
 	CoreOnlyCheck.SetCheck(BST_CHECKED);
+	MergeCheck.SetCheck(BST_CHECKED);
 	BounceCheck.SetCheck(BST_CHECKED);
-	//TraceCheck.SetCheck(BST_CHECKED);
+	TraceCheck.SetCheck(BST_CHECKED);
 	DebugCheck.SetCheck(BST_CHECKED);
 	
 	Particles = new std::vector<Particle*>();
@@ -237,5 +252,8 @@ void CParticleSimDlg::OnStnClickedPicture()
 
 void CParticleSimDlg::OnBnClickedCollisioncheck()
 {
-	CoreOnlyCheck.EnableWindow(CollisionCheck.GetCheck() == BST_CHECKED);
+	bool checked = CollisionCheck.GetCheck() == BST_CHECKED;
+
+	MergeCheck.EnableWindow(checked);
+	CoreOnlyCheck.EnableWindow(checked);
 }
