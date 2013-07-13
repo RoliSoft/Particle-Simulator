@@ -29,18 +29,13 @@ protected:
 
 public:
 	CPicture MainPict;
-	CButton GravityCheck;
-	CButton CollisionCheck;
-	CButton CoreOnlyCheck;
-	CButton BounceCheck;
-	CButton DebugCheck;
-	CButton TraceCheck;
-	std::vector<Particle*>* Particles;
-	ULONG_PTR GdiplusToken;
-	unsigned long long Generation;
+	CButton GravityCheck, CollisionCheck, CoreOnlyCheck, BounceCheck, DebugCheck, TraceCheck;
 	bool Simulating;
+	unsigned long long Generation;
+	std::vector<Particle*>* Particles;
 
 	static UINT SpinThd(LPVOID pParam);
+
 	afx_msg void OnBnClickedExitbutton();
 	afx_msg void OnStnClickedPicture();
 	afx_msg void OnBnClickedCollisioncheck();

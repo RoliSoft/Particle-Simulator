@@ -5,7 +5,18 @@
 
 CPicture::CPicture(void)
 {
+	using namespace D2D1;
+
 	EnableD2DSupport();
+
+	auto d = GetRenderTarget();
+	
+	this->Width          = 0;
+	this->Height         = 0;
+	this->debugBrush     = new CD2DSolidColorBrush(d, ColorF(ColorF::RoyalBlue));
+	this->debugFontBig   = new CD2DTextFormat(d, _T("Verdana"), 14, DWRITE_FONT_WEIGHT_BOLD);
+	this->debugFontSmall = new CD2DTextFormat(d, _T("Tahoma"), 8);
+	this->bgcf           = new ColorF(ColorF::White);
 }
 
 CPicture::~CPicture(void)
@@ -22,16 +33,20 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 {
 	using namespace D2D1;
 
-	CHwndRenderTarget* d = (CHwndRenderTarget*)lParam;
-	CRect rect;
+	auto d = (CHwndRenderTarget*)lParam;
 
-	GetWindowRect(&rect);
-	ScreenToClient(&rect);
+	if (this->Width == 0 && this->Height == 0)
+	{
+		auto s = d->GetPixelSize();
 
-	this->Width  = rect.Width();
-	this->Height = rect.Height();
+		this->Width      = s.width;
+		this->Height     = s.height;
+		this->picRect    = CRect(0, 0, s.width, s.height);
+		this->debugRect1 = CRect(5, 5, s.width - 5, s.height - 5);
+		this->debugRect2 = CRect(5, 45, s.width - 5, s.height - 45);
+	}
 
-	d->Clear(ColorF(ColorF::White));
+	d->Clear(*this->bgcf);
 
 	bool debug = ((CParticleSimDlg*)Owner)->DebugCheck.GetCheck() == BST_CHECKED;
 	bool trace = ((CParticleSimDlg*)Owner)->TraceCheck.GetCheck() == BST_CHECKED;
@@ -55,15 +70,8 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 
 	if (debug)
 	{
-		auto brush = CD2DSolidColorBrush(d, ColorF(ColorF::RoyalBlue));
-		auto font1 = CD2DTextFormat(d, _T("Verdana"), 14, DWRITE_FONT_WEIGHT_BOLD);
-		auto font2 = CD2DTextFormat(d, _T("Tahoma"), 8);
-
-		CRect rect1(5, 5, this->Width - 5, this->Height - 5);
-		CRect rect2(5, 45, this->Width - 5, this->Height - 45);
-
-		d->DrawText(str1, rect1, &brush, &font1);
-		d->DrawText(str2, rect2, &brush, &font2);
+		d->DrawText(str1, this->debugRect1, this->debugBrush, this->debugFontBig);
+		d->DrawText(str2, this->debugRect2, this->debugBrush, this->debugFontSmall);
 	}
 
 	return TRUE;

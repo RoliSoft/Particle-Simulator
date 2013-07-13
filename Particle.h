@@ -19,4 +19,7 @@ public:
 
 	void Update(bool history);
 	void Draw(CHwndRenderTarget* d, bool history);
+
+private:
+	CD2DSolidColorBrush *histBrush, *lineBrush, *fillBrush;
 };

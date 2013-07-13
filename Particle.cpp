@@ -43,10 +43,15 @@ void Particle::Draw(CHwndRenderTarget* d, bool history)
 {
 	using namespace D2D1;
 
+	if (this->histBrush == nullptr && this->lineBrush == nullptr && this->fillBrush == nullptr)
+	{
+		this->histBrush = new CD2DSolidColorBrush(d, RGB(125, 125, 125), 125);
+		this->lineBrush = new CD2DSolidColorBrush(d, this->Color);
+		this->fillBrush = new CD2DSolidColorBrush(d, this->Color, 125);
+	}
+
 	if (history && !this->History.empty())
 	{
-		auto brushh = CD2DSolidColorBrush(d, RGB(125, 125, 125), 125);
-
 		int size = this->History.size();
 		auto history = this->History.linearize();
 
@@ -55,20 +60,18 @@ void Particle::Draw(CHwndRenderTarget* d, bool history)
 			auto from = Point2(history[i - 1].X, history[i - 1].Y);
 			auto to   = Point2(history[i].X, history[i].Y);
 
-			d->DrawLine(from, to, &brushh);
+			d->DrawLine(from, to, this->histBrush);
 		}
 
 		auto from = Point2(history[size - 1].X, history[size - 1].Y);
 		auto to   = Point2(this->Location.X, this->Location.Y);
 
-		d->DrawLine(from, to, &brushh);
+		d->DrawLine(from, to, this->histBrush);
 	}
 	
 	auto center  = Point2(this->Location.X, this->Location.Y);
 	auto ellipse = Ellipse(center, this->Size, this->Size);
-	auto brushl  = CD2DSolidColorBrush(d, this->Color);
-	auto brushf  = CD2DSolidColorBrush(d, this->Color, 125);
-	
-	d->DrawEllipse(&ellipse, &brushl, 2);
-	d->FillEllipse(&ellipse, &brushf);
+
+	d->DrawEllipse(&ellipse, this->lineBrush, 2);
+	d->FillEllipse(&ellipse, this->fillBrush);
 }

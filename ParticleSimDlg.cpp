@@ -11,15 +11,13 @@ CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSim
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	MainPict.Owner = (CStatic*)this;
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	Gdiplus::GdiplusStartup(&GdiplusToken, &gdiplusStartupInput, NULL);
 	Generation = 0;
 	srand(time(NULL));
 }
 
 CParticleSimDlg::~CParticleSimDlg()
 {
-	Gdiplus::GdiplusShutdown(GdiplusToken);
+
 }
 
 void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
@@ -64,18 +62,18 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 					if (that->CoreOnlyCheck.GetCheck() == BST_CHECKED)
 					{
 						collides = (((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X) * ((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X)) + (((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y) * ((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y))
-								<= 4;
+						        <= 4;
 					}
 					else
 					{
 						collides = (((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X) * ((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X)) + (((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y) * ((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y))
-								<= (((*that->Particles)[i]->Size + (*that->Particles)[j]->Size) * ((*that->Particles)[i]->Size + (*that->Particles)[j]->Size));
+						        <= (((*that->Particles)[i]->Size + (*that->Particles)[j]->Size) * ((*that->Particles)[i]->Size + (*that->Particles)[j]->Size));
 					}
 
 					if (collides)
 					{
 						if (std::find(del->begin(), del->end(), (*that->Particles)[i]) != del->end()
-							|| std::find(del->begin(), del->end(), (*that->Particles)[j]) != del->end())
+						 || std::find(del->begin(), del->end(), (*that->Particles)[j]) != del->end())
 						{
 							continue;
 						}
@@ -180,7 +178,7 @@ BOOL CParticleSimDlg::OnInitDialog()
 	BounceCheck.SetCheck(BST_CHECKED);
 	//TraceCheck.SetCheck(BST_CHECKED);
 	DebugCheck.SetCheck(BST_CHECKED);
-
+	
 	Particles = new std::vector<Particle*>();
 	Simulating = true;
 
