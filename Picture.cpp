@@ -5,7 +5,7 @@
 
 CPicture::CPicture(void)
 {
-
+	EnableD2DSupport();
 }
 
 CPicture::~CPicture(void)
@@ -15,39 +15,29 @@ CPicture::~CPicture(void)
 
 BEGIN_MESSAGE_MAP(CPicture, CStatic)
 	ON_WM_PAINT()
+	ON_REGISTERED_MESSAGE(AFX_WM_DRAW2D, &CPicture::OnDraw2D)
 END_MESSAGE_MAP()
 
-void CPicture::OnPaint()
+LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 {
-	using namespace Gdiplus;
+	using namespace D2D1;
 
-	CPaintDC dc(this);
+	CHwndRenderTarget* d = (CHwndRenderTarget*)lParam;
 	CRect rect;
 
 	GetWindowRect(&rect);
 	ScreenToClient(&rect);
 
-	this->Width = rect.Width();
+	this->Width  = rect.Width();
 	this->Height = rect.Height();
 
-	CDC cdc;
-	CBitmap bmp;
-	cdc.CreateCompatibleDC(&dc);
-	bmp.CreateCompatibleBitmap(&dc, this->Width, this->Height);
-	auto old = cdc.SelectObject(&bmp);
-
-	Graphics g(cdc);
-	g.Clear(Color(255, 255, 255, 255));
-
-	g.SetPageUnit(UnitPixel);
-	g.SetSmoothingMode(SmoothingModeHighQuality);
-	g.SetCompositingQuality(CompositingQualityHighQuality);
+	d->Clear(ColorF(ColorF::White));
 
 	bool debug = ((CParticleSimDlg*)Owner)->DebugCheck.GetCheck() == BST_CHECKED;
 	bool trace = ((CParticleSimDlg*)Owner)->TraceCheck.GetCheck() == BST_CHECKED;
 
 	CString str1, str2;
-	
+
 	if (debug)
 	{
 		str1.AppendFormat(_T("%i particles\r\n%u generation"), ((CParticleSimDlg*)Owner)->Particles->size(), ((CParticleSimDlg*)Owner)->Generation);
@@ -60,21 +50,21 @@ void CPicture::OnPaint()
 			str2.AppendFormat(_T("#%u: m = %.5f 0.03px\r\n       v = [ %.5f %.5f ] px/gen\r\n       a = [ %.5f %.5f ] px/gen^2\r\n"), i + 1, (*((CParticleSimDlg*)Owner)->Particles)[i]->Mass, (*((CParticleSimDlg*)Owner)->Particles)[i]->Velocity.X, (*((CParticleSimDlg*)Owner)->Particles)[i]->Velocity.Y, (*((CParticleSimDlg*)Owner)->Particles)[i]->Acceleration.X, (*((CParticleSimDlg*)Owner)->Particles)[i]->Acceleration.Y);
 		}
 
-		(*((CParticleSimDlg*)Owner)->Particles)[i]->Draw(&g, trace);
+		(*((CParticleSimDlg*)Owner)->Particles)[i]->Draw(d, trace);
 	}
 
 	if (debug)
 	{
-		SolidBrush brush(Color(255, 0, 0, 255));
-		FontFamily fontFamily(_T("Verdana"));
-		Gdiplus::Font font1(&fontFamily, 14, FontStyleBold, UnitPixel);
-		Gdiplus::Font font2(&fontFamily, 12, FontStyleRegular, UnitPixel);
-		PointF point1(5, 5);
-		PointF point2(5, 45);
-		g.DrawString(str1, -1, &font1, point1, &brush);
-		g.DrawString(str2, -1, &font2, point2, &brush);
+		auto brush = CD2DSolidColorBrush(d, ColorF(ColorF::RoyalBlue));
+		auto font1 = CD2DTextFormat(d, _T("Verdana"), 14, DWRITE_FONT_WEIGHT_BOLD);
+		auto font2 = CD2DTextFormat(d, _T("Tahoma"), 8);
+
+		CRect rect1(5, 5, this->Width - 5, this->Height - 5);
+		CRect rect2(5, 45, this->Width - 5, this->Height - 45);
+
+		d->DrawText(str1, rect1, &brush, &font1);
+		d->DrawText(str2, rect2, &brush, &font2);
 	}
 
-	dc.BitBlt(rect.left, rect.top, this->Width, this->Height, &cdc, 0, 0, SRCCOPY);
-	cdc.SelectObject(old);
+	return TRUE;
 }

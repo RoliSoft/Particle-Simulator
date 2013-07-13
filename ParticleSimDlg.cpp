@@ -46,7 +46,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 {
 	auto that = (CParticleSimDlg*)pParam;
 
-	while (true)
+	while (that->Simulating)
 	{
 		if (that->CollisionCheck.GetCheck() == BST_CHECKED)
 		{
@@ -161,7 +161,6 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 		that->Generation++;
 
 		that->MainPict.Invalidate();
-
 		Sleep(10);
 	}
 
@@ -183,6 +182,7 @@ BOOL CParticleSimDlg::OnInitDialog()
 	DebugCheck.SetCheck(BST_CHECKED);
 
 	Particles = new std::vector<Particle*>();
+	Simulating = true;
 
 	AfxBeginThread(&CParticleSimDlg::SpinThd, this);
 
@@ -220,6 +220,12 @@ HCURSOR CParticleSimDlg::OnQueryDragIcon()
 void CParticleSimDlg::OnBnClickedExitbutton()
 {
 	this->OnCancel();
+}
+
+void CParticleSimDlg::OnCancel()
+{
+	Simulating = false;
+	CDialog::OnCancel();
 }
 
 void CParticleSimDlg::OnStnClickedPicture()

@@ -23,6 +23,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnCancel();
 
 	DECLARE_MESSAGE_MAP()
 
@@ -37,6 +38,7 @@ public:
 	std::vector<Particle*>* Particles;
 	ULONG_PTR GdiplusToken;
 	unsigned long long Generation;
+	bool Simulating;
 
 	static UINT SpinThd(LPVOID pParam);
 	afx_msg void OnBnClickedExitbutton();

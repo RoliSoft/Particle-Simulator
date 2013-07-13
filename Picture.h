@@ -15,6 +15,6 @@ public:
 
 	DECLARE_MESSAGE_MAP()
 
-	afx_msg void OnPaint();
+	afx_msg LRESULT OnDraw2D(WPARAM wParam, LPARAM lParam);
 };
 

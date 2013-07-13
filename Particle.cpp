@@ -39,28 +39,36 @@ void Particle::Update(bool history)
 	this->Location += this->Velocity;
 }
 
-void Particle::Draw(Gdiplus::Graphics* g, bool history)
+void Particle::Draw(CHwndRenderTarget* d, bool history)
 {
-	using namespace Gdiplus;
+	using namespace D2D1;
 
 	if (history && !this->History.empty())
 	{
-		Pen pn2(Gdiplus::Color((byte)125, (byte)125, (byte)125, (byte)125));
+		auto brushh = CD2DSolidColorBrush(d, RGB(125, 125, 125), 125);
 
 		int size = this->History.size();
 		auto history = this->History.linearize();
 
 		for (int i = 1; i < size; i++)
 		{
-			g->DrawLine(&pn2, (REAL)history[i - 1].X, (REAL)history[i - 1].Y, (REAL)history[i].X, (REAL)history[i].Y);
+			auto from = Point2(history[i - 1].X, history[i - 1].Y);
+			auto to   = Point2(history[i].X, history[i].Y);
+
+			d->DrawLine(from, to, &brushh);
 		}
 
-		g->DrawLine(&pn2, (REAL)history[size].X, (REAL)history[size].Y, (REAL)this->Location.X, (REAL)this->Location.Y);
+		auto from = Point2(history[size - 1].X, history[size - 1].Y);
+		auto to   = Point2(this->Location.X, this->Location.Y);
+
+		d->DrawLine(from, to, &brushh);
 	}
-
-	Pen pn(Gdiplus::Color((byte)255, GetRValue(this->Color), GetGValue(this->Color), GetBValue(this->Color)), 2);
-	SolidBrush br(Gdiplus::Color((byte)125, GetRValue(this->Color), GetGValue(this->Color), GetBValue(this->Color)));
-
-	g->DrawEllipse(&pn, (REAL)(this->Location.X - this->Size), (REAL)(this->Location.Y - this->Size), (REAL)(this->Size + this->Size), (REAL)(this->Size + this->Size));
-	g->FillEllipse(&br, (REAL)(this->Location.X - this->Size), (REAL)(this->Location.Y - this->Size), (REAL)(this->Size + this->Size), (REAL)(this->Size + this->Size));
+	
+	auto center  = Point2(this->Location.X, this->Location.Y);
+	auto ellipse = Ellipse(center, this->Size, this->Size);
+	auto brushl  = CD2DSolidColorBrush(d, this->Color);
+	auto brushf  = CD2DSolidColorBrush(d, this->Color, 125);
+	
+	d->DrawEllipse(&ellipse, &brushl, 2);
+	d->FillEllipse(&ellipse, &brushf);
 }

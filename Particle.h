@@ -18,5 +18,5 @@ public:
 	Particle(COLORREF color, double size, double mass, Vector location, Vector velocity, Vector acceleration);
 
 	void Update(bool history);
-	void Draw(Gdiplus::Graphics* g, bool history);
+	void Draw(CHwndRenderTarget* d, bool history);
 };
