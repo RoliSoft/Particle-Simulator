@@ -15,7 +15,7 @@ CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSim
 	srand(time(NULL));
 }
 
-CParticleSimDlg::~CParticleSimDlg()
+CParticleSimDlg::~CParticleSimDlg(void)
 {
 
 }
@@ -129,6 +129,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 					if (iter != that->Particles->end())
 					{
 						that->Particles->erase(iter);
+						delete p;
 					}
 				}
 			}
@@ -245,7 +246,7 @@ HCURSOR CParticleSimDlg::OnQueryDragIcon()
 
 void CParticleSimDlg::OnBnClickedExitbutton()
 {
-	this->OnCancel();
+	OnCancel();
 }
 
 void CParticleSimDlg::OnCancel()

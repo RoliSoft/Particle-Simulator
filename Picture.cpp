@@ -11,17 +11,17 @@ CPicture::CPicture(void)
 
 	auto d = GetRenderTarget();
 	
-	this->Width          = 0;
-	this->Height         = 0;
-	this->debugBrush     = new CD2DSolidColorBrush(d, ColorF(ColorF::RoyalBlue));
-	this->debugFontBig   = new CD2DTextFormat(d, _T("Verdana"), 14, DWRITE_FONT_WEIGHT_BOLD);
-	this->debugFontSmall = new CD2DTextFormat(d, _T("Tahoma"), 8);
-	this->bgcf           = new ColorF(ColorF::White);
+	Width          = 0;
+	Height         = 0;
+	debugBrush     = new CD2DSolidColorBrush(d, ColorF(ColorF::RoyalBlue));
+	debugFontBig   = new CD2DTextFormat(d, _T("Verdana"), 14, DWRITE_FONT_WEIGHT_BOLD);
+	debugFontSmall = new CD2DTextFormat(d, _T("Tahoma"), 8);
+	bgcf           = new ColorF(ColorF::White);
 }
 
 CPicture::~CPicture(void)
 {
-
+	delete debugBrush, debugFontBig, debugFontSmall, bgcf;
 }
 
 BEGIN_MESSAGE_MAP(CPicture, CStatic)
@@ -35,18 +35,18 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 
 	auto d = (CHwndRenderTarget*)lParam;
 
-	if (this->Width == 0 && this->Height == 0)
+	if (Width == 0 && Height == 0)
 	{
 		auto s = d->GetPixelSize();
 
-		this->Width      = s.width;
-		this->Height     = s.height;
-		this->picRect    = CRect(0, 0, s.width, s.height);
-		this->debugRect1 = CRect(5, 5, s.width - 5, s.height - 5);
-		this->debugRect2 = CRect(5, 45, s.width - 5, s.height - 45);
+		Width      = s.width;
+		Height     = s.height;
+		picRect    = CRect(0, 0, s.width, s.height);
+		debugRect1 = CRect(5, 5, s.width - 5, s.height - 5);
+		debugRect2 = CRect(5, 45, s.width - 5, s.height - 45);
 	}
 
-	d->Clear(*this->bgcf);
+	d->Clear(*bgcf);
 
 	bool debug = ((CParticleSimDlg*)Owner)->DebugCheck.GetCheck() == BST_CHECKED;
 	bool trace = ((CParticleSimDlg*)Owner)->TraceCheck.GetCheck() == BST_CHECKED;
@@ -70,8 +70,8 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 
 	if (debug)
 	{
-		d->DrawText(str1, this->debugRect1, this->debugBrush, this->debugFontBig);
-		d->DrawText(str2, this->debugRect2, this->debugBrush, this->debugFontSmall);
+		d->DrawText(str1, debugRect1, debugBrush, debugFontBig);
+		d->DrawText(str2, debugRect2, debugBrush, debugFontSmall);
 	}
 
 	return TRUE;

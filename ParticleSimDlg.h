@@ -12,7 +12,7 @@ class CParticleSimDlg : public CDialog
 {
 public:
 	CParticleSimDlg(CWnd* pParent = NULL);
-	~CParticleSimDlg();
+	~CParticleSimDlg(void);
 
 	enum { IDD = IDD_PARTICLESIM_DIALOG };
 

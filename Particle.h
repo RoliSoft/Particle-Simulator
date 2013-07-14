@@ -16,6 +16,7 @@ public:
 
 	Particle(void);
 	Particle(COLORREF color, double size, double mass, Vector location, Vector velocity, Vector acceleration);
+	~Particle(void);
 
 	void Update(bool history);
 	void Draw(CHwndRenderTarget* d, bool history);
