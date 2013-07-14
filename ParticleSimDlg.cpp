@@ -8,10 +8,17 @@
 #endif
 
 CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSimDlg::IDD, pParent)
+	, Gravity(TRUE)
+	, Collision(TRUE)
+	, Merge(TRUE)
+	, CoreOnly(TRUE)
+	, Bounce(TRUE)
+	, Trace(TRUE)
+	, Debug(TRUE)
+	, Generation(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	MainPict.Owner = (CStatic*)this;
-	Generation = 0;
 	srand(time(NULL));
 }
 
@@ -26,11 +33,18 @@ void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PICTURE, MainPict);
 	DDX_Control(pDX, IDC_GRAVITYCHECK, GravityCheck);
 	DDX_Control(pDX, IDC_COLLISIONCHECK, CollisionCheck);
+	DDX_Control(pDX, IDC_MERGECHECK, MergeCheck);
 	DDX_Control(pDX, IDC_COREONLYCHECK, CoreOnlyCheck);
 	DDX_Control(pDX, IDC_BOUNCECHECK, BounceCheck);
 	DDX_Control(pDX, IDC_DEBUGCHECK, DebugCheck);
 	DDX_Control(pDX, IDC_TRACECHECK, TraceCheck);
-	DDX_Control(pDX, IDC_MERGECHECK, MergeCheck);
+	DDX_Check(pDX, IDC_GRAVITYCHECK, Gravity);
+	DDX_Check(pDX, IDC_COLLISIONCHECK, Collision);
+	DDX_Check(pDX, IDC_MERGECHECK, Merge);
+	DDX_Check(pDX, IDC_COREONLYCHECK, CoreOnly);
+	DDX_Check(pDX, IDC_BOUNCECHECK, Bounce);
+	DDX_Check(pDX, IDC_TRACECHECK, Trace);
+	DDX_Check(pDX, IDC_DEBUGCHECK, Debug);
 }
 
 BEGIN_MESSAGE_MAP(CParticleSimDlg, CDialog)
@@ -43,74 +57,82 @@ END_MESSAGE_MAP()
 
 UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 {
+	using namespace std;
+
 	auto that = (CParticleSimDlg*)pParam;
 
 	while (that->Simulating)
 	{
-		if (that->CollisionCheck.GetCheck() == BST_CHECKED)
+		while (!that->Queue->empty())
 		{
-			auto del = new std::vector<Particle*>();
-			auto cnt = that->Particles->size();
+			that->Particles->push_back(that->Queue->front());
+			that->Queue->pop();
+		}
 
-			for (unsigned int i = 0; i < cnt; i++)
+		if (that->Collision)
+		{
+			auto del = new unordered_set<Particle*>();
+
+			for (auto p1 : *that->Particles)
 			{
-				for (unsigned int j = 0; j < cnt; j++)
+				for (auto p2 : *that->Particles)
 				{
-					if (i == j) continue;
+					if (p1 == p2) continue;
 
 					bool collides = false;
 
-					if (that->CoreOnlyCheck.GetCheck() == BST_CHECKED)
+					if (that->CoreOnly)
 					{
-						collides = (((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X) * ((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X)) + (((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y) * ((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y))
-						        <= 4;
+						collides = ((p2->Location.X - p1->Location.X) * (p2->Location.X - p1->Location.X)) + ((p2->Location.Y - p1->Location.Y) * (p2->Location.Y - p1->Location.Y))
+							    <= 4;
 					}
 					else
 					{
-						collides = (((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X) * ((*that->Particles)[j]->Location.X - (*that->Particles)[i]->Location.X)) + (((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y) * ((*that->Particles)[j]->Location.Y - (*that->Particles)[i]->Location.Y))
-						        <= (((*that->Particles)[i]->Size + (*that->Particles)[j]->Size) * ((*that->Particles)[i]->Size + (*that->Particles)[j]->Size));
+						collides = ((p2->Location.X - p1->Location.X) * (p2->Location.X - p1->Location.X)) + ((p2->Location.Y - p1->Location.Y) * (p2->Location.Y - p1->Location.Y))
+							    <= ((p1->Size + p2->Size) * (p1->Size + p2->Size));
 					}
 
 					if (collides)
 					{
-						if (std::find(del->begin(), del->end(), (*that->Particles)[i]) != del->end()
-						 || std::find(del->begin(), del->end(), (*that->Particles)[j]) != del->end())
+						//if (find(del->begin(), del->end(), p1) != del->end()
+						// || find(del->begin(), del->end(), p2) != del->end())
+						if (del->count(p1) > 0 || del->count(p2) > 0)
 						{
 							continue;
 						}
 
-						del->push_back((*that->Particles)[i]);
-						del->push_back((*that->Particles)[j]);
+						del->emplace(p1);
+						del->emplace(p2);
 
-						if (that->MergeCheck.GetCheck() == BST_CHECKED)
+						if (that->Merge)
 						{
 							auto part = new Particle();
-							auto sum  = (*that->Particles)[i]->Size + (*that->Particles)[j]->Size;
+							auto sum  = p1->Size + p2->Size;
 
-							part->Size     = max((*that->Particles)[i]->Size, (*that->Particles)[j]->Size) + (0.5 * min((*that->Particles)[i]->Size, (*that->Particles)[j]->Size));
-							part->Mass     = max((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass) + (0.5 * min((*that->Particles)[i]->Mass, (*that->Particles)[j]->Mass));
-							part->Color    = RGB(GetRValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetRValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetGValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetGValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum), GetBValue((*that->Particles)[i]->Color) * ((*that->Particles)[i]->Size / sum) + GetBValue((*that->Particles)[j]->Color) * ((*that->Particles)[j]->Size / sum));
-							part->Location = (*that->Particles)[i]->Location * ((*that->Particles)[i]->Size / sum) + (*that->Particles)[j]->Location * ((*that->Particles)[j]->Size / sum);
-							part->Velocity = (((*that->Particles)[i]->Velocity * (*that->Particles)[i]->Mass) + ((*that->Particles)[j]->Velocity * (*that->Particles)[j]->Mass)) / ((*that->Particles)[i]->Mass + (*that->Particles)[j]->Mass);
+							part->Size     = max(p1->Size, p2->Size) + (0.5 * min(p1->Size, p2->Size));
+							part->Mass     = max(p1->Mass, p2->Mass) + (0.5 * min(p1->Mass, p2->Mass));
+							part->Color    = RGB(GetRValue(p1->Color) * (p1->Size / sum) + GetRValue(p2->Color) * (p2->Size / sum), GetGValue(p1->Color) * (p1->Size / sum) + GetGValue(p2->Color) * (p2->Size / sum), GetBValue(p1->Color) * (p1->Size / sum) + GetBValue(p2->Color) * (p2->Size / sum));
+							part->Location = p1->Location * (p1->Size / sum) + p2->Location * (p2->Size / sum);
+							part->Velocity = ((p1->Velocity * p1->Mass) + (p2->Velocity * p2->Mass)) / (p1->Mass + p2->Mass);
 
-							that->Particles->push_back(part);
+							that->Queue->push(part);
 						}
 						else
 						{
-							(*that->Particles)[i]->Velocity.X *= -1;
-							(*that->Particles)[i]->Velocity.Y *= -1;
-							(*that->Particles)[j]->Velocity.X *= -1;
-							(*that->Particles)[j]->Velocity.Y *= -1;
+							p1->Velocity.X *= -1;
+							p1->Velocity.Y *= -1;
+							p2->Velocity.X *= -1;
+							p2->Velocity.Y *= -1;
 						}
 					}
 				}
 			}
 
-			if (that->MergeCheck.GetCheck() == BST_CHECKED)
+			if (that->Merge)
 			{
-				for (unsigned int i = 0; i < del->size(); i++)
+				for (auto p : *del)
 				{
-					auto iter = std::find(that->Particles->begin(), that->Particles->end(), (*del)[i]);
+					auto iter = find(that->Particles->begin(), that->Particles->end(), p);
 
 					if (iter != that->Particles->end())
 					{
@@ -122,52 +144,50 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 			delete del;
 		}
 
-		if (that->GravityCheck.GetCheck() == BST_CHECKED)
+		if (that->Gravity)
 		{
-			for (unsigned int i = 0; i < that->Particles->size(); i++)
+			for (auto p1 : *that->Particles)
 			{
 				auto grav = new Vector();
 
-				for (unsigned int j = 0; j < that->Particles->size(); j++)
+				for (auto p2 : *that->Particles)
 				{
-					if (i == j) continue;
+					if (p1 == p2) continue;
 
-					auto dist = (*that->Particles)[j]->Location - (*that->Particles)[i]->Location;
+					auto dist = p2->Location - p1->Location;
 					auto magn = sqrt((dist.X * dist.X) + (dist.Y * dist.Y) + (dist.Z * dist.Z));
-					auto efct = (6.67384e-3 * (((*that->Particles)[i]->Mass * (*that->Particles)[j]->Mass) / (magn * magn * magn))) / (*that->Particles)[i]->Mass;
+					auto efct = (6.67384e-3 * ((p1->Mass * p2->Mass) / (magn * magn * magn))) / p1->Mass;
 
-					dist *= efct;
+					dist  *= efct;
 					*grav += dist;
 				}
 
-				(*that->Particles)[i]->Acceleration = *grav;
+				p1->Acceleration = *grav;
 
 				delete grav;
 			}
 		}
 
-		if (that->BounceCheck.GetCheck() == BST_CHECKED)
+		if (that->Bounce)
 		{
-			for (unsigned int i = 0; i < that->Particles->size(); i++)
+			for (auto p : *that->Particles)
 			{
-				if (((*that->Particles)[i]->Location.X <= (*that->Particles)[i]->Size && (*that->Particles)[i]->Velocity.X < 0)
-				 || ((*that->Particles)[i]->Location.X >= (that->MainPict.Width - (*that->Particles)[i]->Size - 3) && (*that->Particles)[i]->Velocity.X > 0))
+				if ((p->Location.X <= p->Size && p->Velocity.X < 0)
+				 || (p->Location.X >= (that->MainPict.Width - p->Size) && p->Velocity.X > 0))
 				{
-					(*that->Particles)[i]->Velocity.X *= -1;
+					p->Velocity.X *= -1;
 				}
-				if (((*that->Particles)[i]->Location.Y <= (*that->Particles)[i]->Size && (*that->Particles)[i]->Velocity.Y < 0)
-				 || ((*that->Particles)[i]->Location.Y >= (that->MainPict.Height - (*that->Particles)[i]->Size - 3) && (*that->Particles)[i]->Velocity.Y > 0))
+				if ((p->Location.Y <= p->Size && p->Velocity.Y < 0)
+				 || (p->Location.Y >= (that->MainPict.Height - p->Size) && p->Velocity.Y > 0))
 				{
-					(*that->Particles)[i]->Velocity.Y *= -1;
+					p->Velocity.Y *= -1;
 				}
 			}
 		}
 
-		bool trace = that->TraceCheck.GetCheck() == BST_CHECKED;
-
-		for (unsigned int i = 0; i < that->Particles->size(); i++)
+		for (auto p : *that->Particles)
 		{
-			(*that->Particles)[i]->Update(trace);
+			p->Update(that->Trace);
 		}
 
 		that->Generation++;
@@ -185,16 +205,9 @@ BOOL CParticleSimDlg::OnInitDialog()
 
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
-
-	GravityCheck.SetCheck(BST_CHECKED);
-	CollisionCheck.SetCheck(BST_CHECKED);
-	CoreOnlyCheck.SetCheck(BST_CHECKED);
-	MergeCheck.SetCheck(BST_CHECKED);
-	BounceCheck.SetCheck(BST_CHECKED);
-	TraceCheck.SetCheck(BST_CHECKED);
-	DebugCheck.SetCheck(BST_CHECKED);
 	
 	Particles = new std::vector<Particle*>();
+	Queue = new std::queue<Particle*>();
 	Simulating = true;
 
 	AfxBeginThread(&CParticleSimDlg::SpinThd, this);
@@ -247,7 +260,7 @@ void CParticleSimDlg::OnStnClickedPicture()
 	GetCursorPos(&point);
 	MainPict.ScreenToClient(&point);
 
-	Particles->push_back(new Particle(RGB(rand() % 255, rand() % 255, rand() % 255), 0, 100 + (rand() % 900) + (1.0 / (rand() % 1000) * 100), Vector(point.x, point.y, 0), Vector(1.0 / (rand() % 1000) * 50 * (rand() % 2 == 1 ? -1 : 1), 1.0 / (rand() % 1000) * 50 * (rand() % 2 == 1 ? -1 : 1), 0), Vector(1.0 / (rand() % 100000) * 10 * (rand() % 2 == 1 ? -1 : 1), 1.0 / (rand() % 100000) * 10 * (rand() % 2 == 1 ? -1 : 1), 0)));
+	Queue->push(new Particle(RGB(rand() % 255, rand() % 255, rand() % 255), 0, 100 + (rand() % 900) + (1.0 / (rand() % 1000) * 100), Vector(point.x, point.y, 0), Vector(1.0 / (rand() % 1000) * 50 * (rand() % 2 == 1 ? -1 : 1), 1.0 / (rand() % 1000) * 50 * (rand() % 2 == 1 ? -1 : 1), 0), Vector(1.0 / (rand() % 100000) * 10 * (rand() % 2 == 1 ? -1 : 1), 1.0 / (rand() % 100000) * 10 * (rand() % 2 == 1 ? -1 : 1), 0)));
 }
 
 void CParticleSimDlg::OnBnClickedCollisioncheck()

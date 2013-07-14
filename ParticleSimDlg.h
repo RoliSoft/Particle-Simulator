@@ -4,7 +4,9 @@
 #include "Particle.h"
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <algorithm>
+#include <unordered_set>
 
 class CParticleSimDlg : public CDialog
 {
@@ -29,10 +31,12 @@ protected:
 
 public:
 	CPicture MainPict;
-	CButton GravityCheck, CollisionCheck, CoreOnlyCheck, MergeCheck, BounceCheck, DebugCheck, TraceCheck;
+	CButton GravityCheck, CollisionCheck, CoreOnlyCheck, MergeCheck, BounceCheck, TraceCheck, DebugCheck;
+	BOOL Gravity, Collision, CoreOnly, Merge, Trace, Debug, Bounce;
 	bool Simulating;
 	unsigned long long Generation;
-	std::vector<Particle*>* Particles;
+	std::vector<Particle*> *Particles;
+	std::queue<Particle*> *Queue;
 
 	static UINT SpinThd(LPVOID pParam);
 
