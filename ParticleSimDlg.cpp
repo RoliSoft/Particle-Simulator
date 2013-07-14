@@ -75,18 +75,12 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 					bool collides = false;
 
-					if (coreOnly)
-					{
-						collides = ((p2->Location.X - p1->Location.X) * (p2->Location.X - p1->Location.X)) + ((p2->Location.Y - p1->Location.Y) * (p2->Location.Y - p1->Location.Y))
-							    <= 4;
-					}
-					else
-					{
-						collides = ((p2->Location.X - p1->Location.X) * (p2->Location.X - p1->Location.X)) + ((p2->Location.Y - p1->Location.Y) * (p2->Location.Y - p1->Location.Y))
-							    <= ((p1->Size + p2->Size) * (p1->Size + p2->Size));
-					}
+					auto dt = (p2->Location + p2->Velocity + p2->Acceleration) - (p1->Location + p1->Velocity + p1->Acceleration);
+					auto it = coreOnly
+						    ? ceil(0.25 * p1->Size)
+							: (p1->Size + p2->Size) * (p1->Size + p2->Size);
 
-					if (collides)
+					if ((dt.X * dt.X) + (dt.Y * dt.Y) <= it)
 					{
 						if (del->count(p1) > 0 || del->count(p2) > 0)
 						{
@@ -111,10 +105,24 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 						}
 						else
 						{
-							p1->Velocity.X *= -1;
-							p1->Velocity.Y *= -1;
-							p2->Velocity.X *= -1;
-							p2->Velocity.Y *= -1;
+							//p1->Velocity = -p1->Velocity;
+							//p2->Velocity = -p2->Velocity;
+
+							auto s1 = (p1->Velocity * (p1->Mass - p2->Mass) + p2->Velocity * p2->Mass * 2) / (p1->Mass + p2->Mass);
+							auto s2 = (p2->Velocity * (p2->Mass - p1->Mass) + p1->Velocity * p1->Mass * 2) / (p1->Mass + p2->Mass);
+							auto uv = (p2->Location - p1->Location) / p1->Location.DistanceTo(p2->Location);
+							p1->Velocity = (-uv) / (-uv).Magnitude() * s1;
+							p2->Velocity = uv / uv.Magnitude() * s2;
+
+							//p1->Velocity = (p1->Velocity * (p1->Mass - p2->Mass) + p2->Velocity * p2->Mass * 2) / (p1->Mass + p2->Mass);
+							//p2->Velocity = (p2->Velocity * (p2->Mass - p1->Mass) + p1->Velocity * p1->Mass * 2) / (p1->Mass + p2->Mass);
+
+							//auto s1 = sqrt(p1->Velocity.X * p1->Velocity.X + p1->Velocity.Y * p1->Velocity.Y);
+							//auto s2 = sqrt(p2->Velocity.X * p2->Velocity.X + p2->Velocity.Y * p2->Velocity.Y);
+							//auto cf = (p1->Velocity.X * p2->Velocity.X + p1->Velocity.Y * p2->Velocity.Y) / (s1 * s2);
+							//auto fi = cos(pow(cf, -1));
+							//p1->Velocity = p1->Velocity * (sqrt(p1->Mass * p1->Mass + p2->Mass * p2->Mass + 2 * p1->Mass * p2->Mass * cf) / (p1->Mass + p2->Mass));
+							//p2->Velocity = p1->Velocity * ((p1->Mass * 2) / (p1->Mass + p2->Mass)) * sin(fi / 2);
 						}
 					}
 				}
@@ -141,23 +149,20 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 		{
 			for (auto p1 : *that->Particles)
 			{
-				auto grav = new Vector();
+				Vector grav;
 
 				for (auto p2 : *that->Particles)
 				{
 					if (p1 == p2) continue;
 
 					auto dist = p2->Location - p1->Location;
-					auto magn = sqrt((dist.X * dist.X) + (dist.Y * dist.Y) + (dist.Z * dist.Z));
-					auto efct = (6.67384e-3 * ((p1->Mass * p2->Mass) / (magn * magn * magn))) / p1->Mass;
+					auto efct = (6.67384e-3 * ((p1->Mass * p2->Mass) / pow(dist.Magnitude(), 3))) / p1->Mass;
 
-					dist  *= efct;
-					*grav += dist;
+					dist *= efct;
+					grav += dist;
 				}
 
-				p1->Acceleration = *grav;
-
-				delete grav;
+				p1->Acceleration = grav;
 			}
 		}
 

@@ -11,15 +11,26 @@ public:
 	Vector(void);
 	Vector(double x, double y, double z);
 
-	bool operator == (Vector rhs);
-	bool operator != (Vector rhs);
-	Vector operator + (Vector rhs);
-	Vector operator - (Vector rhs);
+	double Magnitude();
+	double DistanceTo(Vector v);
+
+	bool operator == (Vector v);
+	bool operator != (Vector v);
+	Vector operator + (Vector v);
+	Vector operator - (Vector v);
 	Vector operator - ();
-	Vector operator * (double rhs);
-	Vector operator / (double rhs);
-	void operator += (Vector rhs);
-	void operator -= (Vector rhs);
-	void operator *= (double rhs);
-	void operator /= (double rhs);
+	Vector operator * (Vector v);
+	Vector operator / (Vector v);
+	Vector operator + (double v);
+	Vector operator - (double v);
+	Vector operator * (double v);
+	Vector operator / (double v);
+	void operator += (Vector v);
+	void operator -= (Vector v);
+	void operator *= (Vector v);
+	void operator /= (Vector v);
+	void operator += (double v);
+	void operator -= (double v);
+	void operator *= (double v);
+	void operator /= (double v);
 };

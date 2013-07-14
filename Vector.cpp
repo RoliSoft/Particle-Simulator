@@ -15,32 +15,42 @@ Vector::Vector(double x, double y, double z)
 	Z = z;
 }
 
-bool Vector::operator == (Vector rhs)
+double Vector::Magnitude()
 {
-	return X == rhs.X
-		&& Y == rhs.Y
-		&& Z == rhs.Z;
+	return sqrt((X * X) + (Y * Y) + (Z * Z));
 }
 
-bool Vector::operator != (Vector rhs)
+double Vector::DistanceTo(Vector v)
 {
-	return X != rhs.X
-		|| Y != rhs.Y
-		|| Z != rhs.Z;
+	return sqrt((X * v.X) + (Y * v.Y) + (Z * v.Z));
 }
 
-Vector Vector::operator + (Vector rhs)
+bool Vector::operator == (Vector v)
 {
-	return Vector(X + rhs.X,
-				  Y + rhs.Y,
-				  Z + rhs.Z);
+	return X == v.X
+		&& Y == v.Y
+		&& Z == v.Z;
 }
 
-Vector Vector::operator - (Vector rhs)
+bool Vector::operator != (Vector v)
 {
-	return Vector(X - rhs.X,
-				  Y - rhs.Y,
-				  Z - rhs.Z);
+	return X != v.X
+		|| Y != v.Y
+		|| Z != v.Z;
+}
+
+Vector Vector::operator + (Vector v)
+{
+	return Vector(X + v.X,
+				  Y + v.Y,
+				  Z + v.Z);
+}
+
+Vector Vector::operator - (Vector v)
+{
+	return Vector(X - v.X,
+				  Y - v.Y,
+				  Z - v.Z);
 }
 
 Vector Vector::operator - ()
@@ -50,44 +60,100 @@ Vector Vector::operator - ()
 				  -Z);
 }
 
-Vector Vector::operator * (double rhs)
+Vector Vector::operator * (Vector v)
 {
-	return Vector(X * rhs,
-				  Y * rhs,
-				  Z * rhs);
+	return Vector(X * v.X,
+				  Y * v.Y,
+				  Z * v.Z);
 }
 
-Vector Vector::operator / (double rhs)
+Vector Vector::operator / (Vector v)
 {
-	return Vector(X / rhs,
-				  Y / rhs,
-				  Z / rhs);
+	return Vector(X / v.X,
+				  Y / v.Y,
+				  Z / v.Z);
 }
 
-void Vector::operator += (Vector rhs)
+Vector Vector::operator + (double v)
 {
-	X += rhs.X;
-	Y += rhs.Y;
-	Z += rhs.Z;
+	return Vector(X + v,
+				  Y + v,
+				  Z + v);
 }
 
-void Vector::operator -= (Vector rhs)
+Vector Vector::operator - (double v)
 {
-	X -= rhs.X;
-	Y -= rhs.Y;
-	Z -= rhs.Z;
+	return Vector(X - v,
+				  Y - v,
+				  Z - v);
 }
 
-void Vector::operator *= (double rhs)
+Vector Vector::operator * (double v)
 {
-	X *= rhs;
-	Y *= rhs;
-	Z *= rhs;
+	return Vector(X * v,
+				  Y * v,
+				  Z * v);
 }
 
-void Vector::operator /= (double rhs)
+Vector Vector::operator / (double v)
 {
-	X /= rhs;
-	Y /= rhs;
-	Z /= rhs;
+	return Vector(X / v,
+				  Y / v,
+				  Z / v);
+}
+
+void Vector::operator += (Vector v)
+{
+	X += v.X;
+	Y += v.Y;
+	Z += v.Z;
+}
+
+void Vector::operator -= (Vector v)
+{
+	X -= v.X;
+	Y -= v.Y;
+	Z -= v.Z;
+}
+
+void Vector::operator *= (Vector v)
+{
+	X *= v.X;
+	Y *= v.Y;
+	Z *= v.Z;
+}
+
+void Vector::operator /= (Vector v)
+{
+	X /= v.X;
+	Y /= v.Y;
+	Z /= v.Z;
+}
+
+void Vector::operator += (double v)
+{
+	X += v;
+	Y += v;
+	Z += v;
+}
+
+void Vector::operator -= (double v)
+{
+	X -= v;
+	Y -= v;
+	Z -= v;
+}
+
+void Vector::operator *= (double v)
+{
+	X *= v;
+	Y *= v;
+	Z *= v;
+}
+
+void Vector::operator /= (double v)
+{
+	X /= v;
+	Y /= v;
+	Z /= v;
 }

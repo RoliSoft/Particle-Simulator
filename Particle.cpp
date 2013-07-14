@@ -41,6 +41,17 @@ void Particle::Update(bool history)
 	}
 
 	Velocity += Acceleration;
+
+	if (Velocity.X > 1)
+	{
+		Velocity.X = 1;
+	}
+
+	if (Velocity.Y > 1)
+	{
+		Velocity.Y = 1;
+	}
+
 	Location += Velocity;
 }
 
