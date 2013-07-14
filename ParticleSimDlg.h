@@ -36,6 +36,7 @@ public:
 	unsigned long long Generation;
 	std::vector<Particle*> *Particles;
 	std::queue<Particle*> *Queue;
+	HANDLE RenderMutex;
 
 	static UINT SpinThd(LPVOID pParam);
 

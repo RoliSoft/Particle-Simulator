@@ -11,8 +11,8 @@ CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSim
 	, Generation(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	MainPict.Owner = (CStatic*)this;
-	srand(time(NULL));
+	MainPict.Owner = this;
+	srand((unsigned int)time(NULL));
 }
 
 CParticleSimDlg::~CParticleSimDlg(void)
@@ -190,8 +190,9 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 		that->Generation++;
 
+		ReleaseSemaphore(that->RenderMutex, 0, NULL);
 		that->MainPict.Invalidate();
-		Sleep(10);
+		WaitForSingleObject(that->RenderMutex, INFINITE);
 	}
 
 	return EXIT_SUCCESS;
@@ -212,9 +213,10 @@ BOOL CParticleSimDlg::OnInitDialog()
 	TraceCheck.SetCheck(BST_CHECKED);
 	DebugCheck.SetCheck(BST_CHECKED);
 
-	Particles  = new std::vector<Particle*>();
-	Queue      = new std::queue<Particle*>();
-	Simulating = true;
+	Particles   = new std::vector<Particle*>();
+	Queue       = new std::queue<Particle*>();
+	Simulating  = true;
+	RenderMutex = CreateSemaphore(NULL, 1, 1, NULL);
 
 	AfxBeginThread(&CParticleSimDlg::SpinThd, this);
 

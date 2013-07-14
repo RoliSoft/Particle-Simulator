@@ -48,24 +48,24 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 
 	d->Clear(*bgcf);
 
-	bool debug = ((CParticleSimDlg*)Owner)->DebugCheck.GetCheck() == BST_CHECKED;
-	bool trace = ((CParticleSimDlg*)Owner)->TraceCheck.GetCheck() == BST_CHECKED;
+	bool debug = Owner->DebugCheck.GetCheck() == BST_CHECKED;
+	bool trace = Owner->TraceCheck.GetCheck() == BST_CHECKED;
 
 	CString str1, str2;
 
 	if (debug)
 	{
-		str1.AppendFormat(_T("%i particles\r\n%u generation"), ((CParticleSimDlg*)Owner)->Particles->size(), ((CParticleSimDlg*)Owner)->Generation);
+		str1.AppendFormat(_T("%i particles\r\n%u generation"), Owner->Particles->size(), Owner->Generation);
 	}
 
-	for (unsigned int i = 0; i < ((CParticleSimDlg*)Owner)->Particles->size(); i++)
+	for (unsigned int i = 0; i < Owner->Particles->size(); i++)
 	{
 		if (debug)
 		{
-			str2.AppendFormat(_T("#%u: m = %.5f 0.03px\r\n       v = [ %.5f %.5f ] px/gen\r\n       a = [ %.5f %.5f ] px/gen^2\r\n"), i + 1, (*((CParticleSimDlg*)Owner)->Particles)[i]->Mass, (*((CParticleSimDlg*)Owner)->Particles)[i]->Velocity.X, (*((CParticleSimDlg*)Owner)->Particles)[i]->Velocity.Y, (*((CParticleSimDlg*)Owner)->Particles)[i]->Acceleration.X, (*((CParticleSimDlg*)Owner)->Particles)[i]->Acceleration.Y);
+			str2.AppendFormat(_T("#%u: m = %.5f 0.03px\r\n       v = [ %.5f %.5f ] px/gen\r\n       a = [ %.5f %.5f ] px/gen^2\r\n"), i + 1, (*Owner->Particles)[i]->Mass, (*Owner->Particles)[i]->Velocity.X, (*Owner->Particles)[i]->Velocity.Y, (*Owner->Particles)[i]->Acceleration.X, (*Owner->Particles)[i]->Acceleration.Y);
 		}
 
-		(*((CParticleSimDlg*)Owner)->Particles)[i]->Draw(d, trace);
+		(*Owner->Particles)[i]->Draw(d, trace);
 	}
 
 	if (debug)
@@ -73,6 +73,8 @@ LRESULT CPicture::OnDraw2D(WPARAM wParam, LPARAM lParam)
 		d->DrawText(str1, debugRect1, debugBrush, debugFontBig);
 		d->DrawText(str2, debugRect2, debugBrush, debugFontSmall);
 	}
+
+	ReleaseSemaphore(Owner->RenderMutex, 1, NULL);
 
 	return TRUE;
 }

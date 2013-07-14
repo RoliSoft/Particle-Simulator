@@ -4,10 +4,12 @@
 #include <iostream>
 #include <vector>
 
+class CParticleSimDlg;
+
 class CPicture : public CStatic
 {
 public:
-	CStatic* Owner;
+	CParticleSimDlg* Owner;
 	int Width, Height;
 
 	CPicture(void);
