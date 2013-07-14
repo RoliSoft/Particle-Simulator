@@ -31,57 +31,37 @@ bool Vector::operator != (Vector rhs)
 
 Vector Vector::operator + (Vector rhs)
 {
-	Vector tmp;
-
-	tmp.X = this->X + rhs.X;
-	tmp.Y = this->Y + rhs.Y;
-	tmp.Z = this->Z + rhs.Z;
-
-	return tmp;
+	return *new Vector(this->X + rhs.X,
+					   this->Y + rhs.Y,
+					   this->Z + rhs.Z);
 }
 
 Vector Vector::operator - (Vector rhs)
 {
-	Vector tmp;
-
-	tmp.X = this->X - rhs.X;
-	tmp.Y = this->Y - rhs.Y;
-	tmp.Z = this->Z - rhs.Z;
-
-	return tmp;
+	return *new Vector(this->X - rhs.X,
+					   this->Y - rhs.Y,
+					   this->Z - rhs.Z);
 }
 
 Vector Vector::operator - ()
 {
-	Vector tmp;
-
-	tmp.X = -this->X;
-	tmp.Y = -this->Y;
-	tmp.Z = -this->Z;
-
-	return tmp;
+	return *new Vector(-this->X,
+					   -this->Y,
+					   -this->Z);
 }
 
 Vector Vector::operator * (double rhs)
 {
-	Vector tmp;
-
-	tmp.X = this->X * rhs;
-	tmp.Y = this->Y * rhs;
-	tmp.Z = this->Z * rhs;
-
-	return tmp;
+	return *new Vector(this->X * rhs,
+					   this->Y * rhs,
+					   this->Z * rhs);
 }
 
 Vector Vector::operator / (double rhs)
 {
-	Vector tmp;
-
-	tmp.X = this->X / rhs;
-	tmp.Y = this->Y / rhs;
-	tmp.Z = this->Z / rhs;
-
-	return tmp;
+	return *new Vector(this->X / rhs,
+					   this->Y / rhs,
+					   this->Z / rhs);
 }
 
 void Vector::operator += (Vector rhs)

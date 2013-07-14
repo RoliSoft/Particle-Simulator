@@ -8,13 +8,6 @@
 #endif
 
 CParticleSimDlg::CParticleSimDlg(CWnd* pParent /*=NULL*/) : CDialog(CParticleSimDlg::IDD, pParent)
-	, Gravity(TRUE)
-	, Collision(TRUE)
-	, Merge(TRUE)
-	, CoreOnly(TRUE)
-	, Bounce(TRUE)
-	, Trace(TRUE)
-	, Debug(TRUE)
 	, Generation(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -38,13 +31,6 @@ void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BOUNCECHECK, BounceCheck);
 	DDX_Control(pDX, IDC_DEBUGCHECK, DebugCheck);
 	DDX_Control(pDX, IDC_TRACECHECK, TraceCheck);
-	DDX_Check(pDX, IDC_GRAVITYCHECK, Gravity);
-	DDX_Check(pDX, IDC_COLLISIONCHECK, Collision);
-	DDX_Check(pDX, IDC_MERGECHECK, Merge);
-	DDX_Check(pDX, IDC_COREONLYCHECK, CoreOnly);
-	DDX_Check(pDX, IDC_BOUNCECHECK, Bounce);
-	DDX_Check(pDX, IDC_TRACECHECK, Trace);
-	DDX_Check(pDX, IDC_DEBUGCHECK, Debug);
 }
 
 BEGIN_MESSAGE_MAP(CParticleSimDlg, CDialog)
@@ -63,13 +49,21 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 	while (that->Simulating)
 	{
+		bool gravity   = that->GravityCheck.GetCheck()   == BST_CHECKED,
+			 collision = that->CollisionCheck.GetCheck() == BST_CHECKED,
+			 merge     = that->MergeCheck.GetCheck()     == BST_CHECKED,
+			 coreOnly  = that->CoreOnlyCheck.GetCheck()  == BST_CHECKED,
+			 bounce    = that->BounceCheck.GetCheck()    == BST_CHECKED,
+			 trace     = that->TraceCheck.GetCheck()     == BST_CHECKED,
+			 debug     = that->DebugCheck.GetCheck()     == BST_CHECKED;
+
 		while (!that->Queue->empty())
 		{
 			that->Particles->push_back(that->Queue->front());
 			that->Queue->pop();
 		}
 
-		if (that->Collision)
+		if (collision)
 		{
 			auto del = new unordered_set<Particle*>();
 
@@ -81,7 +75,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 					bool collides = false;
 
-					if (that->CoreOnly)
+					if (coreOnly)
 					{
 						collides = ((p2->Location.X - p1->Location.X) * (p2->Location.X - p1->Location.X)) + ((p2->Location.Y - p1->Location.Y) * (p2->Location.Y - p1->Location.Y))
 							    <= 4;
@@ -94,8 +88,6 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 					if (collides)
 					{
-						//if (find(del->begin(), del->end(), p1) != del->end()
-						// || find(del->begin(), del->end(), p2) != del->end())
 						if (del->count(p1) > 0 || del->count(p2) > 0)
 						{
 							continue;
@@ -104,7 +96,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 						del->emplace(p1);
 						del->emplace(p2);
 
-						if (that->Merge)
+						if (merge)
 						{
 							auto part = new Particle();
 							auto sum  = p1->Size + p2->Size;
@@ -128,7 +120,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 				}
 			}
 
-			if (that->Merge)
+			if (merge)
 			{
 				for (auto p : *del)
 				{
@@ -144,7 +136,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 			delete del;
 		}
 
-		if (that->Gravity)
+		if (gravity)
 		{
 			for (auto p1 : *that->Particles)
 			{
@@ -168,7 +160,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 			}
 		}
 
-		if (that->Bounce)
+		if (bounce)
 		{
 			for (auto p : *that->Particles)
 			{
@@ -187,7 +179,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 		for (auto p : *that->Particles)
 		{
-			p->Update(that->Trace);
+			p->Update(trace);
 		}
 
 		that->Generation++;
@@ -205,9 +197,17 @@ BOOL CParticleSimDlg::OnInitDialog()
 
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
-	
-	Particles = new std::vector<Particle*>();
-	Queue = new std::queue<Particle*>();
+
+	GravityCheck.SetCheck(BST_CHECKED);
+	CollisionCheck.SetCheck(BST_CHECKED);
+	CoreOnlyCheck.SetCheck(BST_CHECKED);
+	MergeCheck.SetCheck(BST_CHECKED);
+	BounceCheck.SetCheck(BST_CHECKED);
+	TraceCheck.SetCheck(BST_CHECKED);
+	DebugCheck.SetCheck(BST_CHECKED);
+
+	Particles  = new std::vector<Particle*>();
+	Queue      = new std::queue<Particle*>();
 	Simulating = true;
 
 	AfxBeginThread(&CParticleSimDlg::SpinThd, this);

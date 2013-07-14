@@ -3,24 +3,24 @@
 
 Particle::Particle(void)
 {
-	this->Color = RGB(255, 0, 0);
-	this->Location = Vector(0, 0, 0);
-	this->Velocity = Vector(0, 0, 0);
+	this->Color        = RGB(255, 0, 0);
+	this->Location     = Vector(0, 0, 0);
+	this->Velocity     = Vector(0, 0, 0);
 	this->Acceleration = Vector(0, 0, 0);
-	this->Size = 0;
-	this->Mass = 0;
-	this->History = boost::circular_buffer<Vector>(50);
+	this->Size         = 0;
+	this->Mass         = 0;
+	this->History      = boost::circular_buffer<Vector>(50);
 }
 
 Particle::Particle(COLORREF color, double size, double mass, Vector location, Vector velocity, Vector acceleration)
 {
-	this->Color = color;
-	this->Location = location;
-	this->Velocity = velocity;
+	this->Color        = color;
+	this->Location     = location;
+	this->Velocity     = velocity;
 	this->Acceleration = acceleration;
-	this->Size = size == 0 ? 20 * mass / 1000 : size;
-	this->Mass = mass;
-	this->History = boost::circular_buffer<Vector>(50);
+	this->Size         = size == 0 ? 20 * mass / 1000 : size;
+	this->Mass         = mass;
+	this->History      = boost::circular_buffer<Vector>(50);
 }
 
 void Particle::Update(bool history)

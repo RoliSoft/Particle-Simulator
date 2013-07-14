@@ -32,7 +32,6 @@ protected:
 public:
 	CPicture MainPict;
 	CButton GravityCheck, CollisionCheck, CoreOnlyCheck, MergeCheck, BounceCheck, TraceCheck, DebugCheck;
-	BOOL Gravity, Collision, CoreOnly, Merge, Trace, Debug, Bounce;
 	bool Simulating;
 	unsigned long long Generation;
 	std::vector<Particle*> *Particles;
