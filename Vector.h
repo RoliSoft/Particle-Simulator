@@ -20,7 +20,6 @@ public:
 	Vector operator - (Vector v);
 	Vector operator - ();
 	Vector operator * (Vector v);
-	Vector operator / (Vector v);
 	Vector operator + (double v);
 	Vector operator - (double v);
 	Vector operator * (double v);

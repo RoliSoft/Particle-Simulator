@@ -29,6 +29,7 @@ void CParticleSimDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MERGECHECK, MergeCheck);
 	DDX_Control(pDX, IDC_COREONLYCHECK, CoreOnlyCheck);
 	DDX_Control(pDX, IDC_BOUNCECHECK, BounceCheck);
+	DDX_Control(pDX, IDC_SPEEDLIMITCHECK, SpeedLimitCheck);
 	DDX_Control(pDX, IDC_DEBUGCHECK, DebugCheck);
 	DDX_Control(pDX, IDC_TRACECHECK, TraceCheck);
 }
@@ -49,13 +50,14 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 	while (that->Simulating)
 	{
-		bool gravity   = that->GravityCheck.GetCheck()   == BST_CHECKED,
-			 collision = that->CollisionCheck.GetCheck() == BST_CHECKED,
-			 merge     = that->MergeCheck.GetCheck()     == BST_CHECKED,
-			 coreOnly  = that->CoreOnlyCheck.GetCheck()  == BST_CHECKED,
-			 bounce    = that->BounceCheck.GetCheck()    == BST_CHECKED,
-			 trace     = that->TraceCheck.GetCheck()     == BST_CHECKED,
-			 debug     = that->DebugCheck.GetCheck()     == BST_CHECKED;
+		bool gravity   = that->GravityCheck.GetCheck()    == BST_CHECKED,
+			 collision = that->CollisionCheck.GetCheck()  == BST_CHECKED,
+			 merge     = that->MergeCheck.GetCheck()      == BST_CHECKED,
+			 coreOnly  = that->CoreOnlyCheck.GetCheck()   == BST_CHECKED,
+			 bounce    = that->BounceCheck.GetCheck()     == BST_CHECKED,
+			 vLimit    = that->SpeedLimitCheck.GetCheck() == BST_CHECKED,
+			 trace     = that->TraceCheck.GetCheck()      == BST_CHECKED,
+			 debug     = that->DebugCheck.GetCheck()      == BST_CHECKED;
 
 		while (!that->Queue->empty())
 		{
@@ -105,24 +107,11 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 						}
 						else
 						{
-							//p1->Velocity = -p1->Velocity;
-							//p2->Velocity = -p2->Velocity;
-
 							auto s1 = (p1->Velocity * (p1->Mass - p2->Mass) + p2->Velocity * p2->Mass * 2) / (p1->Mass + p2->Mass);
 							auto s2 = (p2->Velocity * (p2->Mass - p1->Mass) + p1->Velocity * p1->Mass * 2) / (p1->Mass + p2->Mass);
 							auto uv = (p2->Location - p1->Location) / p1->Location.DistanceTo(p2->Location);
 							p1->Velocity = (-uv) / (-uv).Magnitude() * s1;
 							p2->Velocity = uv / uv.Magnitude() * s2;
-
-							//p1->Velocity = (p1->Velocity * (p1->Mass - p2->Mass) + p2->Velocity * p2->Mass * 2) / (p1->Mass + p2->Mass);
-							//p2->Velocity = (p2->Velocity * (p2->Mass - p1->Mass) + p1->Velocity * p1->Mass * 2) / (p1->Mass + p2->Mass);
-
-							//auto s1 = sqrt(p1->Velocity.X * p1->Velocity.X + p1->Velocity.Y * p1->Velocity.Y);
-							//auto s2 = sqrt(p2->Velocity.X * p2->Velocity.X + p2->Velocity.Y * p2->Velocity.Y);
-							//auto cf = (p1->Velocity.X * p2->Velocity.X + p1->Velocity.Y * p2->Velocity.Y) / (s1 * s2);
-							//auto fi = cos(pow(cf, -1));
-							//p1->Velocity = p1->Velocity * (sqrt(p1->Mass * p1->Mass + p2->Mass * p2->Mass + 2 * p1->Mass * p2->Mass * cf) / (p1->Mass + p2->Mass));
-							//p2->Velocity = p1->Velocity * ((p1->Mass * 2) / (p1->Mass + p2->Mass)) * sin(fi / 2);
 						}
 					}
 				}
@@ -149,20 +138,20 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 		{
 			for (auto p1 : *that->Particles)
 			{
-				Vector grav;
+				Vector G;
 
 				for (auto p2 : *that->Particles)
 				{
 					if (p1 == p2) continue;
 
-					auto dist = p2->Location - p1->Location;
-					auto efct = (6.67384e-3 * ((p1->Mass * p2->Mass) / pow(dist.Magnitude(), 3))) / p1->Mass;
+					auto d = p2->Location - p1->Location;
+					auto g = (6.67384e-3 * ((p1->Mass * p2->Mass) / pow(d.Magnitude(), 3))) / p1->Mass;
 
-					dist *= efct;
-					grav += dist;
+					d *= g;
+					G += d;
 				}
 
-				p1->Acceleration = grav;
+				p1->Acceleration = G;
 			}
 		}
 
@@ -185,7 +174,7 @@ UINT CParticleSimDlg::SpinThd(LPVOID pParam)
 
 		for (auto p : *that->Particles)
 		{
-			p->Update(trace);
+			p->Update(trace, vLimit);
 		}
 
 		that->Generation++;
@@ -210,6 +199,7 @@ BOOL CParticleSimDlg::OnInitDialog()
 	CoreOnlyCheck.SetCheck(BST_CHECKED);
 	MergeCheck.SetCheck(BST_CHECKED);
 	BounceCheck.SetCheck(BST_CHECKED);
+	SpeedLimitCheck.SetCheck(BST_CHECKED);
 	TraceCheck.SetCheck(BST_CHECKED);
 	DebugCheck.SetCheck(BST_CHECKED);
 

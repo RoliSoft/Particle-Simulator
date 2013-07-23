@@ -62,16 +62,9 @@ Vector Vector::operator - ()
 
 Vector Vector::operator * (Vector v)
 {
-	return Vector(X * v.X,
-				  Y * v.Y,
-				  Z * v.Z);
-}
-
-Vector Vector::operator / (Vector v)
-{
-	return Vector(X / v.X,
-				  Y / v.Y,
-				  Z / v.Z);
+	return Vector((Y * v.Z) - (Z * v.Y),
+				  (Z * v.X) - (X * v.Z),
+				  (X * v.Y) - (Y * v.X));
 }
 
 Vector Vector::operator + (double v)

@@ -28,7 +28,7 @@ Particle::~Particle(void)
 	delete lineBrush, fillBrush;
 }
 
-void Particle::Update(bool history)
+void Particle::Update(bool history, bool vlimit)
 {
 	if (history && (History.empty() || abs(History.back().X - Location.X) > 3 || abs(History.back().Y - Location.Y) > 3))
 	{
@@ -40,16 +40,13 @@ void Particle::Update(bool history)
 		History.clear();
 	}
 
-	Velocity += Acceleration;
-
-	if (Velocity.X > 1)
+	if (vlimit)
 	{
-		Velocity.X = 1;
+		Velocity = (Velocity + Acceleration) / (1 + (Velocity * Acceleration).Magnitude());
 	}
-
-	if (Velocity.Y > 1)
+	else
 	{
-		Velocity.Y = 1;
+		Velocity += Acceleration;
 	}
 
 	Location += Velocity;
